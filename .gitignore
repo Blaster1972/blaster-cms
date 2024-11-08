@@ -1,0 +1,40 @@
+# Python
+*.pyc
+*.pyo
+db.sqlite3
+
+# Django
+/staticfiles_collected/
+
+# Divio
+.divio
+/data.tar.gz
+/data
+
+
+# OS-specific patterns - add your own here
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+.idea/
+.env
+bin/
+lib/
+lib64/
+# lib64 symbolic link
+/lib64 
+pyvenv.cfg
+
+nginx/certs/
+
+*.log
+
+# Ignore man pages
+/man/
+man*/
+
+
+

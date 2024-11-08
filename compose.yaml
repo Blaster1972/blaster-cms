@@ -1,0 +1,76 @@
+services:
+  web:
+    # the application's web service (container) will use an image based on our Dockerfile
+    build: .
+    # map the internal port 80 to port 8000 on the host
+    ports:
+      - "8000:80"
+    # map the host directory to app (which allows us to see and edit files inside the container)
+    volumes:
+      - ".:/app:rw"
+      - "./data:/data:rw"
+    # the default command to run whenever the container is launched
+    command: python manage.py runserver 0.0.0.0:80
+    # the URL 'postgres' or 'mysql' will point to the application's db service
+    networks:
+      - blaster-net
+
+    env_file: .env-local
+
+  db:
+    # Select one of the following db configurations for the database
+    image: postgres:15-alpine
+    ports:
+      - "${DB_PORT-}:5432/tcp"  # allow your local dev env to connect to the db if variable set
+    environment:
+      POSTGRES_DB: "droid_db"
+      POSTGRES_USER: "blaster"
+      POSTGRES_PASSWORD: "droid7"
+      # POSTGRES_HOST_AUTH_METHOD: "trust"
+      SERVICE_MANAGER: "fsm-postgres"
+    networks:
+      - blaster-net
+    volumes:
+       - postgres-data:/var/lib/postgresql/data/
+
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "newsithempire1@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "droid7"
+    ports:
+      - "5050:80" # Exposes pgAdmin on port 5050
+    networks:
+      - blaster-net
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin # Persist data
+
+  nginx:
+    image: nginx:latest
+    build:
+      context: .
+      dockerfile: nginx/nginx.Dockerfile # Explicitly specify the Dockerfile name    
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx/logs:/var/log/nginx/
+      # - 'nginx:/nginx/certs/blaster.ddns.net/:/etc/nginx/certs/blaster.ddns.net/'
+      # - 'nginx:/nginx/certs/droid7.ddns.net/:/etc/nginx/certs/droid7.ddns.net/'
+      # - 'nginx:/nginx/certs/mixitup-endpoint.ddns.net/:/etc/nginx/certs/mixitup-endpoint.ddns.net/'
+    networks:
+      - blaster-net
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+
+networks:
+  blaster-net:
+
+volumes:
+  postgres-data:
+  pgadmin-data:
