@@ -1,2 +1,35 @@
 .git
 node_modules
+
+#/lib/python3.11/site-packages/
+
+# Ignore virtual environment directories and files
+/app/bin/
+/app/include/
+/app/lib/
+/app/lib64/
+/app/pyvenv.cfg
+/app/share/
+
+
+# Python cache and temporary files
+#__pycache__/
+#*.pyc
+#*.pyo
+
+# Environment files and settings that shouldn't be copied to the container
+.vscode/
+
+/app/Dockerfile
+/app/README.md
+/app/README.rst
+/app/nginx_backup/
+/app/ngrok/
+/app/nginx/
+
+
+
+
+
+
+

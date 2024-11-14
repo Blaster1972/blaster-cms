@@ -1,21 +1,30 @@
 services:
   web:
+    user: blaster:blaster
     # the application's web service (container) will use an image based on our Dockerfile
     build: .
     # map the internal port 80 to port 8000 on the host
+    #expose:
+    #  - "8000"
     ports:
-      - "8000:80"
+      - "8000:8000"
     # map the host directory to app (which allows us to see and edit files inside the container)
     volumes:
-      - ".:/app:rw"
-      - "./data:/data:rw"
+      # - ".:/app:rw"
+      - "./backend:/app/backend/:rw"
+      - "./scripts:/app/scripts/:rw"
+      - "./data:/app/data:rw"
+      
     # the default command to run whenever the container is launched
-    command: python manage.py runserver 0.0.0.0:80
-    # the URL 'postgres' or 'mysql' will point to the application's db service
+    entrypoint: ["scripts/entrypoint.sh"]
     networks:
       - blaster-net
-
+      #blaster-net:
+      #  aliases: 
+      #    - web
     env_file: .env-local
+    #extra_hosts:
+    #  - "web:127.0.0.1"
 
   db:
     # Select one of the following db configurations for the database
@@ -26,10 +35,12 @@ services:
       POSTGRES_DB: "droid_db"
       POSTGRES_USER: "blaster"
       POSTGRES_PASSWORD: "droid7"
-      # POSTGRES_HOST_AUTH_METHOD: "trust"
       SERVICE_MANAGER: "fsm-postgres"
     networks:
       - blaster-net
+      #blaster-net:
+      #  aliases: 
+      #    - postgres
     volumes:
        - postgres-data:/var/lib/postgresql/data/
 
@@ -44,6 +55,9 @@ services:
       - "5050:80" # Exposes pgAdmin on port 5050
     networks:
       - blaster-net
+      #blaster-net:
+      #  aliases: 
+      #    - pgadmin
     volumes:
       - pgadmin-data:/var/lib/pgadmin # Persist data
 
@@ -53,24 +67,43 @@ services:
       context: .
       dockerfile: nginx/nginx.Dockerfile # Explicitly specify the Dockerfile name    
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/certs:/etc/nginx/certs
-      - ./nginx/logs:/var/log/nginx/
-      # - 'nginx:/nginx/certs/blaster.ddns.net/:/etc/nginx/certs/blaster.ddns.net/'
-      # - 'nginx:/nginx/certs/droid7.ddns.net/:/etc/nginx/certs/droid7.ddns.net/'
-      # - 'nginx:/nginx/certs/mixitup-endpoint.ddns.net/:/etc/nginx/certs/mixitup-endpoint.ddns.net/'
+      - "./nginx-config/nginx.conf:/etc/nginx/nginx.conf"        # Main NGINX config file
+      - "./nginx-config/sites-available/default:/etc/nginx/sites-available/default"  # Site configs
+      - "./nginx-config/sites-enabled/default:/etc/nginx/sites-enabled/default"
+      - "./nginx-config/conf.d:/etc/nginx/conf.d"  
+      
+      - "/var/www/letsencrypt:/var/www/letsencrypt:rw"
+      - "/var/log/nginx:/var/log/nginx:rw"
+      - "/var/cache/nginx:/var/cache/nginx:rw"
+      
+      - "./staticfiles_collected:/app/staticfiles_collected:rw"  
+      - "./data:/app/data:rw" 
+
+      #- ./etc/nginx/certs:/etc/nginx/certs
+      #- ./etc/nginx/conf.d:/etc/nginx/conf.d:rw
     networks:
       - blaster-net
+    extra_hosts:
+    - "web:127.0.0.1"
+      #blaster-net:
+      #  aliases:
+      #    - nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 443:443
     depends_on:
       - web
+    #links:
+    #  - web:web
 
 networks:
   blaster-net:
+    driver: bridge
 
 volumes:
   postgres-data:
+    driver: local
   pgadmin-data:
+    driver: local
+  nginx-config:
+    driver: local

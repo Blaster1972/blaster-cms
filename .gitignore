@@ -28,13 +28,17 @@ lib64/
 /lib64 
 pyvenv.cfg
 
-nginx/certs/
-
 *.log
 
 # Ignore man pages
 /man/
 man*/
+
+nginx/certs/
+nginx_backup/
+nginx-backup2/
+ngrok/
+
 
 
 
